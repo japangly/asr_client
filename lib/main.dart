@@ -10,7 +10,7 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    String url = 'wss://echo.websocket.org';
+    String url = 'ws://172.23.21.61:9000/api/asr/';
 
     /// Logo with Normal Text example
     Widget splashScreen = SplashScreenView(

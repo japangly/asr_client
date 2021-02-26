@@ -45,5 +45,7 @@
 		<string>Can We Use Your Microphone Please</string>
 		<key>NSAppleMusicUsageDescription</key>
 		<string>Can We Use Your File Finder Please</string>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
 	</dict>
 </plist>

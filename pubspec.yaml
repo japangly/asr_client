@@ -23,6 +23,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  chunked_stream: ^1.2.0
   cupertino_icons: ^1.0.2
   file_picker: ^2.1.6
   flutter_audio_recorder: ^0.5.5

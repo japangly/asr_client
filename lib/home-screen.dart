@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io' as io;
 import 'dart:io';
 
+import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_audio_recorder/flutter_audio_recorder.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:random_string/random_string.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'theme.dart';
@@ -108,6 +108,7 @@ class _HomeSreenState extends State<HomeSreen> {
 
     setState(() {
       _recording = result;
+      _sendMessage(_recording.path);
     });
   }
 
@@ -211,45 +212,46 @@ class _HomeSreenState extends State<HomeSreen> {
     _recorder = FlutterAudioRecorder(
       customPath,
       audioFormat: AudioFormat.WAV,
-      sampleRate: 22050,
+      sampleRate: 16000,
     );
     await _recorder.initialized;
   }
 
-  void _sendMessage() {
-    widget.channel.sink.add(randomString(500));
+  Future<void> _sendMessage(String filePath) async {
+    final reader = ChunkedStreamIterator(File(filePath).openRead());
+    // While the reader has a next byte
+    while (true) {
+      // read one byte
+      var data = await reader.read(4000);
+      if (data.length == 0) {
+        print('End of file reached');
+        break;
+      }
+      print('next byte: ${data[0]}');
+      widget.channel.sink.add(data);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: _APP_BAR_SIZE,
-        title: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Image.asset(
-              'assets/ic_launcher.png',
-              fit: BoxFit.cover,
-              height: 64.0,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Text('កម្មវិធីបំលែងសំលេងទៅអត្ថបទ'),
-            ),
-          ],
+        title: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Text('កម្មវិធីបំលែងសំលេងទៅអត្ថបទ'),
         ),
         actions: [
           IconButton(
             padding: EdgeInsets.all(16.0),
             icon: Icon(Icons.upload_file),
             onPressed: () async {
-              _result =
-                  await FilePicker.platform.pickFiles(type: FileType.audio);
+              _result = await FilePicker.platform.pickFiles(
+                type: FileType.custom,
+                allowedExtensions: ['wav'],
+              );
               if (_result != null) {
                 _audioFile = File(_result.files.single.path);
-                print(_audioFile);
+                _sendMessage(_audioFile.path);
               } else {
                 // User canceled the picker
               }
@@ -262,6 +264,7 @@ class _HomeSreenState extends State<HomeSreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Container(
+              height: 256,
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -285,10 +288,6 @@ class _HomeSreenState extends State<HomeSreen> {
                   ),
                 ),
               ),
-            ),
-            IconButton(
-              icon: Icon(Icons.settings_remote),
-              onPressed: _sendMessage,
             ),
           ],
         ),
